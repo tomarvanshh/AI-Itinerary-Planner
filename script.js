@@ -1,7 +1,22 @@
 const API_MODEL = "gemini-2.5-flash-preview-09-2025";
 const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${API_MODEL}:generateContent`;
-const API_KEY = import.meta.env.VITE_API_KEY;
+let API_KEY = null;
 const MAX_RETRIES = 5;
+
+// Load API key from config.json (for GitHub Pages deployment)
+async function loadConfig() {
+  try {
+    const response = await fetch("config.json");
+    const config = await response.json();
+    API_KEY = config.apiKey;
+  } catch (error) {
+    console.error("Failed to load config:", error);
+    displayError("Configuration error: Unable to load API configuration.");
+  }
+}
+
+// Make loadConfig globally available
+window.loadConfig = loadConfig;
 
 // DOM Elements
 const form = document.getElementById("itineraryForm");
@@ -154,6 +169,13 @@ function renderItinerary(itineraryData) {
 
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
+
+  // Ensure API key is loaded
+  if (!API_KEY) {
+    displayError("API key not configured. Please check your config.json file.");
+    return;
+  }
+
   startLoading();
 
   const destination = document.getElementById("destination").value;
