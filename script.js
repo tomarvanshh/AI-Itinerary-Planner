@@ -15,9 +15,6 @@ async function loadConfig() {
   }
 }
 
-// Make loadConfig globally available
-window.loadConfig = loadConfig;
-
 // DOM Elements
 const form = document.getElementById("itineraryForm");
 const outputContainer = document.getElementById("outputContainer");
