@@ -1,12 +1,22 @@
-const API_MODEL = "gemini-2.5-flash-preview-09-2025";
-const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${API_MODEL}:generateContent`;
-const API_KEY = "AIzaSyDWgBEDCKZJLDmWqnk1luhImnmpjplQiw4";
-const MAX_RETRIES = 5;
+// --- API Endpoints ---
+const PYTHON_ML_API_URL = "http://localhost:5000/api/rank_pois";
+const PYTHON_CITIES_API_URL = "http://localhost:5000/api/cities"; // NEW: Endpoint to get city list
 
-// DOM Elements
+// Gemini API endpoint (for final generation)
+const GEMINI_MODEL = "gemini-2.5-flash-preview-09-2025";
+const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+// FIX: For local testing, insert your actual API Key here.
+const API_KEY = "AIzaSyA7Vf7deMNvcKBcqvNQ4XySdnWHoJKcHzU"; // Replace with your actual key for local testing. Leave empty for Canvas environment.
+
+// --- Global State ---
+let VALID_CITIES = []; // Stores the list of valid cities fetched from Python
+
+// --- DOM Elements ---
 const form = document.getElementById("itineraryForm");
+const destinationInput = document.getElementById("destination");
 const outputContainer = document.getElementById("outputContainer");
 const loading = document.getElementById("loading");
+const loadingStage = document.getElementById("loadingStage");
 const summaryCard = document.getElementById("summaryCard");
 const summaryText = document.getElementById("summaryText");
 const budgetText = document.getElementById("budgetText");
@@ -15,7 +25,14 @@ const generateButton = document.getElementById("generateButton");
 const errorBox = document.getElementById("errorBox");
 const errorMessage = document.getElementById("errorMessage");
 
-// JSON Schema for Structured Output
+// Custom element for validation feedback
+const cityError = document.createElement("div");
+cityError.className = "text-red-600 text-sm mt-1 font-medium hidden";
+cityError.id = "cityError";
+// Insert the error element right below the destination input
+destinationInput.parentNode.appendChild(cityError);
+
+// JSON Schema for Structured Output (Crucial for the AI integration)
 const ITINERARY_SCHEMA = {
   type: "OBJECT",
   properties: {
@@ -50,12 +67,13 @@ const ITINERARY_SCHEMA = {
                 },
                 name: {
                   type: "STRING",
-                  description: "Name of the place or activity.",
+                  description:
+                    "Name of the place or activity. MUST be one of the provided POIs.",
                 },
                 details: {
                   type: "STRING",
                   description:
-                    "Short description of the activity and budget advice (e.g., 'Entry fee is $20. Book in advance.').",
+                    "Short description of the activity, budget advice, and relevance to the Uttarakhand dataset.",
                 },
               },
               required: ["time", "name", "details"],
@@ -68,27 +86,79 @@ const ITINERARY_SCHEMA = {
     budgetEstimate: {
       type: "STRING",
       description:
-        "A final estimation of the total per-person budget for the specified number of days, considering the user's budget level. Must include currency.",
+        "A final estimation of the total per-person budget for the specified number of days, considering the user's budget level. Must include INR currency.",
     },
   },
   required: ["tripSummary", "dailyPlan", "budgetEstimate"],
 };
 
-// --- Utility Functions ---
+// --- Autocomplete and Validation Logic ---
 
-async function fetchWithExponentialBackoff(fn) {
-  for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
-    try {
-      return await fn();
-    } catch (error) {
-      if (attempt === MAX_RETRIES - 1) throw error;
-      const delay = Math.pow(2, attempt) * 1000;
-      await new Promise((resolve) => setTimeout(resolve, delay));
+async function fetchCitiesAndSetupAutocomplete() {
+  try {
+    const response = await fetch(PYTHON_CITIES_API_URL);
+    if (!response.ok) {
+      throw new Error("Could not connect to backend to load city list.");
     }
+    const data = await response.json();
+    VALID_CITIES = data.cities || [];
+    console.log(`Loaded ${VALID_CITIES.length} unique cities for validation.`);
+    setupAutocomplete(VALID_CITIES);
+  } catch (error) {
+    console.error("Critical: Could not fetch city list.", error);
+    destinationInput.placeholder = "Error: City list unavailable.";
+    cityError.textContent = `CRITICAL: City validation failed. Please ensure 'api.py' is running.`;
+    cityError.classList.remove("hidden");
   }
 }
 
-function startLoading() {
+function setupAutocomplete(cities) {
+  const list = document.createElement("datalist");
+  list.id = "citySuggestions";
+  cities.forEach((city) => {
+    const option = document.createElement("option");
+    option.value = city;
+    list.appendChild(option);
+  });
+  // Link the datalist to the destination input
+  destinationInput.setAttribute("list", "citySuggestions");
+  document.body.appendChild(list);
+
+  // Initial validation check setup
+  destinationInput.addEventListener("input", validateCityInput);
+  destinationInput.addEventListener("blur", validateCityInput);
+}
+
+function validateCityInput() {
+  const value = destinationInput.value.trim();
+  if (value === "") {
+    cityError.classList.add("hidden");
+    destinationInput.setCustomValidity("");
+    return true;
+  }
+
+  // Check if the input exactly matches one of the valid cities (case-insensitive)
+  const isValid = VALID_CITIES.some(
+    (city) => city.toLowerCase() === value.toLowerCase()
+  );
+
+  if (isValid) {
+    destinationInput.setCustomValidity("");
+    cityError.classList.add("hidden");
+    return true;
+  } else {
+    destinationInput.setCustomValidity(
+      `Please select a valid city from the list.`
+    );
+    cityError.textContent = `Invalid city. Please enter a valid city in Uttarakhand from the suggestions.`;
+    cityError.classList.remove("hidden");
+    return false;
+  }
+}
+
+// --- Utility Functions (Standard) ---
+
+function startLoading(stageMessage) {
   outputContainer.classList.remove("hidden");
   dailyPlanContainer.innerHTML = "";
   summaryCard.classList.add("hidden");
@@ -96,161 +166,195 @@ function startLoading() {
   loading.classList.remove("hidden");
   generateButton.disabled = true;
   generateButton.innerHTML = "Planning...";
+  loadingStage.textContent = stageMessage;
 }
 
 function stopLoading() {
   loading.classList.add("hidden");
   generateButton.disabled = false;
-  generateButton.innerHTML = "Generate Itinerary";
+  generateButton.innerHTML = "Start Hybrid Planning";
 }
 
 function displayError(message) {
   errorBox.classList.remove("hidden");
   errorMessage.textContent = message;
   summaryCard.classList.add("hidden");
+  loading.classList.add("hidden");
 }
 
 function renderItinerary(itineraryData) {
   dailyPlanContainer.innerHTML = "";
-
-  // Summary
   summaryText.textContent = itineraryData.tripSummary;
   budgetText.textContent = `Estimated Budget: ${itineraryData.budgetEstimate}`;
   summaryCard.classList.remove("hidden");
 
-  // Daily Plans
   itineraryData.dailyPlan.forEach((dayPlan) => {
     const dayCard = document.createElement("div");
     dayCard.className =
       "bg-white p-6 rounded-xl shadow-lg border-t-4 border-primary-blue/70 transition duration-300 hover:shadow-xl";
 
-    const activitiesHtml = dayPlan.activities
+    let activitiesHtml = dayPlan.activities
       .map(
         (activity) => `
-          <li class="flex items-start space-x-3 py-2 border-b last:border-b-0">
-            <span class="text-primary-blue font-semibold w-20 flex-shrink-0">${activity.time}</span>
-            <div>
-              <p class="font-medium text-gray-900">${activity.name}</p>
-              <p class="text-sm text-gray-600">${activity.details}</p>
-            </div>
-          </li>
+            <li class="flex items-start space-x-3 py-2 border-b last:border-b-0">
+                <span class="text-primary-blue font-semibold w-20 flex-shrink-0">${activity.time}</span>
+                <div>
+                    <p class="font-medium text-gray-900">${activity.name}</p>
+                    <p class="text-sm text-gray-600">${activity.details}</p>
+                </div>
+            </li>
         `
       )
       .join("");
 
     dayCard.innerHTML = `
-      <h3 class="text-2xl font-bold mb-2 text-primary-blue">${dayPlan.day}</h3>
-      <p class="text-sm text-gray-500 italic mb-4">Theme: ${dayPlan.theme}</p>
-      <ul class="divide-y divide-gray-100">
-        ${activitiesHtml}
-      </ul>
-    `;
-
+            <h3 class="text-2xl font-bold mb-2 text-primary-blue">${dayPlan.day}</h3>
+            <p class="text-sm text-gray-500 italic mb-4">Theme: ${dayPlan.theme}</p>
+            <ul class="divide-y divide-gray-100">
+                ${activitiesHtml}
+            </ul>
+        `;
     dailyPlanContainer.appendChild(dayCard);
   });
 }
 
-// --- Main AI Logic ---
+// --- Main Hybrid Generation Logic ---
 
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
 
-  // Ensure API key is loaded
-  if (!API_KEY) {
-    displayError("API key not configured. Please check your config.json file.");
+  // 1. Frontend Validation Check
+  if (!validateCityInput()) {
     return;
   }
 
-  startLoading();
-
-  const destination = document.getElementById("destination").value;
+  const destination = destinationInput.value;
   const days = document.getElementById("days").value;
   const budget = document.getElementById("budget").value;
   const preferences = document.getElementById("preferences").value;
 
-  const systemPrompt = `
-You are an expert, world-class travel planner AI agent.
-Generate a detailed, day-by-day itinerary in a strictly structured JSON format.
-
-User inputs:
-- Destination: ${destination}
-- Days: ${days}
-- Budget level: ${budget}
-- Preferences: ${preferences}
-
-Strict rules:
-1. The response MUST be valid JSON conforming exactly to the provided JSON Schema. Do not include any text, markdown, or commentary outside the JSON object.
-2. The itinerary must cover exactly ${days} days.
-3. Tailor activities, food, and accommodation style to the "${budget}" budget level.
-4. Incorporate the user's specific interests ("${preferences}").
-
-Generate the itinerary now.
-`.trim();
-
-  const payload = {
-    contents: [
-      {
-        role: "user",
-        parts: [{ text: systemPrompt }],
-      },
-    ],
-    generationConfig: {
-      // ✅ Correct field names for REST API
-      responseMimeType: "application/json",
-      responseSchema: ITINERARY_SCHEMA,
-    },
-  };
+  let contextForGemini = "";
 
   try {
-    const finalApiUrl = `${API_URL}?key=${API_KEY}`;
+    // ===========================================
+    // STAGE 1: Custom Python ML/NLP (Preference Matching)
+    // ===========================================
+    startLoading("Stage 1: Running NLP/ML Preference Matcher...");
 
-    const response = await fetchWithExponentialBackoff(() =>
-      fetch(finalApiUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      })
-    );
+    const mlPayload = {
+      preferences: preferences,
+      destination: destination,
+      days: days,
+    };
 
-    const result = await response.json();
-    console.log("Gemini raw result:", result);
+    // Fetch call to your Python Flask server
+    const mlResponse = await fetch(PYTHON_ML_API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(mlPayload),
+    });
 
-    if (!response.ok) {
+    if (!mlResponse.ok) {
+      const errorBody = await mlResponse.json().catch(() => ({}));
+
+      // FIX 1: Check for the specific 400 status error message from Python
+      if (mlResponse.status === 400 && errorBody.error) {
+        // If Python returns a specific validation error (e.g., "Invalid Destination: ..."), show that error directly.
+        throw new Error(`[Backend Validation] ${errorBody.error}`);
+      }
+
+      // Fallback for general Python server errors
       throw new Error(
-        result.error?.message ||
-          `API call failed with status: ${response.status}`
+        `ML Backend failed. Status ${mlResponse.status}. Details: ${
+          errorBody.error || "Check Python server console."
+        }`
       );
     }
 
-    const candidate = result.candidates?.[0];
-    const jsonString = candidate?.content?.parts?.[0]?.text;
+    const mlResult = await mlResponse.json();
+    contextForGemini = mlResult.context_for_gemini;
+
+    if (!contextForGemini) {
+      throw new Error(
+        "ML model returned empty context. Check dataset or preference input."
+      );
+    }
+
+    // ===========================================
+    // STAGE 2: Generative AI (Structuring and Formatting)
+    // ===========================================
+    startLoading("Stage 2: Calling Gemini for Itinerary Structuring...");
+
+    const systemPrompt = `You are an expert travel planner specializing in Uttarakhand, India. Your task is to generate a detailed, day-by-day itinerary strictly adhering to the user's constraints and the provided POI data.
+
+        **Instructions:**
+        1. The plan must be for ${days} days in ${destination}.
+        2. The plan must align with the "${budget}" budget style.
+        3. **CRITICAL:** Use ONLY the Points of Interest (POIs) provided in the context below. Do not suggest places outside this list.
+        4. **CRITICAL NAME FIX:** For the 'name' field in the final JSON, you MUST replace the dataset's generic names (e.g., 'River Spot 145', 'City Spot 12') with a plausible, descriptive, and realistic name for a location in Uttarakhand (e.g., 'Triveni Ghat', 'Mall Road, Nainital'). The category (river, city, etc.) and city must match the POI details.
+        5. The final output MUST be valid JSON conforming exactly to the provided JSON Schema.
+        
+        **POI Context:**
+        ${contextForGemini}`;
+
+    const geminiPayload = {
+      contents: [{ parts: [{ text: systemPrompt }] }],
+      generationConfig: {
+        responseMimeType: "application/json",
+        responseSchema: ITINERARY_SCHEMA,
+      },
+    };
+
+    // Determine the final API URL
+    const finalApiUrl = API_KEY
+      ? `${GEMINI_API_URL}?key=${API_KEY}`
+      : GEMINI_API_URL;
+
+    const geminiResponse = await fetch(finalApiUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(geminiPayload),
+    });
+
+    const geminiResult = await geminiResponse.json();
+
+    if (!geminiResponse.ok) {
+      throw new Error(
+        geminiResult.error?.message ||
+          `Gemini API call failed with status: ${geminiResponse.status}`
+      );
+    }
+
+    const jsonString = geminiResult.candidates?.[0]?.content?.parts?.[0]?.text;
 
     if (!jsonString) {
-      console.error("Missing JSON string in response:", result);
       throw new Error(
         "AI failed to generate a complete itinerary (JSON output missing)."
       );
     }
 
-    let itineraryData;
-    try {
-      itineraryData = JSON.parse(jsonString);
-    } catch (err) {
-      console.error("JSON parsing failed. Raw model text:", jsonString);
-      throw new Error(
-        "Model returned invalid JSON. Check the console to see the raw response."
-      );
-    }
-
+    // Parse and Render
+    const itineraryData = JSON.parse(jsonString);
     renderItinerary(itineraryData);
   } catch (error) {
     console.error("Itinerary Generation Failed:", error);
-    displayError(
-      `Itinerary generation failed: ${error.message}. Open DevTools → Console to see more details.`
-    );
+    // FIX 2: Better error message handling
+    let userErrorMessage = `Planning failed: ${error.message}`;
+
+    if (error.message.includes("[Backend Validation]")) {
+      userErrorMessage = error.message.replace(
+        "[Backend Validation]",
+        "Validation Failed:"
+      );
+    } else if (error.message.includes("ML Backend failed")) {
+      userErrorMessage = `ML Backend (Python Server) connection failed. Please ensure 'python api.py' is running and accessible.`;
+    }
+
+    displayError(userErrorMessage);
   } finally {
     stopLoading();
   }
 });
+
+// Call initialization on page load
+window.addEventListener("load", fetchCitiesAndSetupAutocomplete);
