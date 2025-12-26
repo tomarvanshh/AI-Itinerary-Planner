@@ -7,7 +7,8 @@ import os
 app = Flask(__name__)
 CORS(app)
 
-MAPBOX_TOKEN = "pk.eyJ1IjoidmFuc2h0b21hciIsImEiOiJjbWpuNmI5NTUwN2lsM2NzazF0b3ZlYXpxIn0.qdxEH6eSdLE0YcArJQ9EUw"
+# Load Mapbox token from environment variable to avoid committing secrets to source control
+MAPBOX_TOKEN = os.getenv("MAPBOX_TOKEN")
 
 MAPBOX_URL = "https://api.mapbox.com/geocoding/v5/mapbox.places"
 
@@ -17,6 +18,9 @@ def search_city():
 
     if len(query) < 2:
         return jsonify([])
+
+    if not MAPBOX_TOKEN:
+        return jsonify({"error": "Mapbox API token not configured. Set MAPBOX_TOKEN environment variable."}), 500
 
     url = f"{MAPBOX_URL}/{query}.json"
 

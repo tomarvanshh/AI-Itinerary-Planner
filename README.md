@@ -15,6 +15,8 @@
 
 > Note: The backend uses Mapbox for city search. To avoid hitting limits or exposing a key, set `MAPBOX_TOKEN` as an environment variable instead of leaving it in the code.
 
+**Security note:** If your Mapbox token was previously committed to this repository, revoke the exposed token immediately in your Mapbox account and create a new token. Rewriting Git history is required to remove secrets from past commits — tools like `git filter-repo` or the [BFG Repo-Cleaner](https://rtyley.github.io/bfg-repo-cleaner/) can help; I can assist with this if you want (note: history rewriting requires force-push and will affect collaborators).
+
 ---
 
 ## 🚀 What you can try
