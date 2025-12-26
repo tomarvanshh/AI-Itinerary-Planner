@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environments
+venv/
+.venv/
+env/
+.env
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+
+# Flask
+instance/
+*.sqlite3
+
+# Editor folders
+.vscode/
+.idea/
+.DS_Store
+
+# Logs
+*.log
+
+# Node
+node_modules/
