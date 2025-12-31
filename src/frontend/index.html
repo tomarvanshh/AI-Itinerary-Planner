@@ -2,72 +2,120 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <title>AI Itinerary Planner</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <meta charset="UTF-8" />
+    <title>PlanMySafar – AI Trip Planner</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="style.css" />
+
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
 </head>
 
 <body>
 
-    <div class="container">
-        <div class="card">
-            <h1>🌍 AI-Powered Itinerary Planner</h1>
-            <p class="subtitle">Plan smarter trips with AI recommendations</p>
-
-            <form id="tripForm">
-
-                <div class="row">
-                    <div class="input-group autocomplete">
-                        <label>Source City</label>
-                        <input type="text" id="source" placeholder="Enter source city" autocomplete="off">
-                        <div class="suggestions" id="sourceSuggestions"></div>
-                    </div>
-
-                    <div class="input-group autocomplete">
-                        <label>Destination City</label>
-                        <input type="text" id="destination" placeholder="Enter destination city" autocomplete="off">
-                        <div class="suggestions" id="destinationSuggestions"></div>
-                    </div>
-                </div>
-
-
-                <div class="row">
-                    <div class="input-group">
-                        <label>Number of Days</label>
-                        <input type="number" id="days" min="1" max="30" value="3">
-                    </div>
-
-                    <div class="input-group">
-                        <label>Budget (₹)</label>
-                        <input type="range" id="budget" min="5000" max="200000" step="1000">
-                        <span id="budgetValue">₹50,000</span>
-                    </div>
-                </div>
-
-                <div class="input-group">
-                    <label>Travel Preferences</label>
-                    <div class="tag-input-container" id="tagContainer">
-                        <input type="text" id="tagInput" placeholder="Type preference & press Enter">
-                    </div>
-                </div>
-
-
-                <div class="input-group">
-                    <label>Special Constraints</label>
-                    <div class="checkbox-group">
-                        <label><input type="checkbox" value="pet_friendly"> Pet Friendly</label>
-                        <label><input type="checkbox" value="child_friendly"> Child Friendly</label>
-                        <label><input type="checkbox" value="senior_friendly"> Senior Friendly</label>
-                    </div>
-                </div>
-
-                <button type="submit">✨ Generate Itinerary</button>
-            </form>
+    <!-- ===== NAVBAR ===== -->
+    <header class="navbar">
+        <div class="nav-left">
+            <img src="planmysafar.jpeg" class="logo" alt="PlanMySafar" />
+            <span class="brand">PlanMySafar</span>
         </div>
-    </div>
 
+        <nav class="nav-center">
+            <a href="#">Explore</a>
+            <a href="#">Hot Places</a>
+        </nav>
+
+        <div class="nav-right">
+            <button class="login-btn">Login / Sign up</button>
+        </div>
+    </header>
+
+    <!-- ===== HERO SECTION ===== -->
+    <section class="hero">
+        <div class="hero-overlay"></div>
+
+        <div class="hero-content">
+            <h1>Plan your next adventure with AI</h1>
+            <p>Personalized itineraries. Smarter travel decisions.</p>
+
+            <!-- ===== SEARCH CARD ===== -->
+            <form id="tripForm" class="search-card">
+
+                <div class="row travel-row">
+                    <div class="from-to-group">
+
+                        <div class="input-wrapper">
+                            <label class="field-label">From</label>
+                            <div class="input-group autocomplete">
+                                <input type="text" id="source" placeholder="Source city" autocomplete="off" />
+                                <div id="sourceSuggestions" class="suggestions"></div>
+                            </div>
+                        </div>
+
+                        <div class="arrow">→</div>
+
+                        <div class="input-wrapper">
+                            <label class="field-label">To</label>
+                            <div class="input-group autocomplete">
+                                <input type="text" id="destination" placeholder="Destination city" autocomplete="off" />
+                                <div id="destinationSuggestions" class="suggestions"></div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="input-wrapper days-group">
+                        <label class="field-label">Days</label>
+                        <input type="number" id="days" placeholder="Days" min="1" />
+                    </div>
+                </div>
+
+
+                <div class="row">
+                    <div class="preferences">
+                        <label class="field-label">Travel Preferences</label>
+                        <div id="tagContainer" class="tag-container">
+                            <input id="tagInput" placeholder="Type & press Enter" />
+                        </div>
+                    </div>
+
+                    <!-- Adults -->
+                    <div class="adults-group">
+                        <label>No. of Adults</label>
+                        <input type="number" id="adults" min="1" value="1" placeholder="Adults" />
+                    </div>
+
+                </div>
+
+                <div class="row">
+                    <div class="budget-group" style="width:100%;">
+                        <label>Budget (₹)</label>
+                        <input type="range" id="budget" min="5000" max="200000" step="100" />
+                        <span id="budgetValue">₹50000</span>
+                    </div>
+                </div>
+
+
+                <button class="cta-btn">Proceed</button>
+
+            </form>
+            <!-- TRANSPORT OPTIONS -->
+            <div id="transportSection" class="transport-section" style="display:none;">
+                <h3>Choose Your Transport</h3>
+
+                <div id="transportOptions" class="transport-options"></div>
+
+                <button id="lockTransportBtn" class="cta-btn" disabled>
+                    Confirm Transport
+                </button>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- JS -->
     <script src="script.js"></script>
 </body>
 

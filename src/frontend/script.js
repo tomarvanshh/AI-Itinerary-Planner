@@ -7,6 +7,9 @@ const budgetValue = document.getElementById("budgetValue");
 budgetSlider.value = 50000;
 budgetValue.innerText = `₹${budgetSlider.value}`;
 
+let selectedTransport = null;
+let lockedTransport = null;
+
 budgetSlider.addEventListener("input", () => {
   budgetValue.innerText = `₹${budgetSlider.value}`;
 });
@@ -53,13 +56,10 @@ document.getElementById("tripForm").addEventListener("submit", function (e) {
       })
         .then((res) => res.json())
         .then((result) => {
-          let message = `Distance: ${distance} km\nRecommended: ${result.recommended}\n\nOptions:\n`;
+          console.log("Transport Recommendation:", result);
 
-          result.options.forEach((o) => {
-            message += `${o.mode} → ₹${o.estimated_cost}, ${o.estimated_time_hr} hrs\n`;
-          });
-
-          alert(message);
+          // 🔥 THIS LINE MAKES UI VISIBLE
+          showTransportOptions(result);
         });
     })
     .catch((err) => {
@@ -243,3 +243,52 @@ function updateActiveItem(items, index) {
     items[index].scrollIntoView({ block: "nearest" });
   }
 }
+
+function showTransportOptions(data) {
+  const section = document.getElementById("transportSection");
+  const container = document.getElementById("transportOptions");
+  const lockBtn = document.getElementById("lockTransportBtn");
+
+  container.innerHTML = "";
+  section.style.display = "block";
+  lockBtn.disabled = true;
+
+  data.options.forEach((option) => {
+    const card = document.createElement("div");
+    card.className = "transport-card";
+
+    if (option.mode === data.recommended) {
+      card.classList.add("recommended");
+      card.innerHTML += `<div class="badge">Recommended</div>`;
+    }
+
+    card.innerHTML += `
+      <h4>${option.mode}</h4>
+      <p>⏱ ${option.estimated_time_hr} hrs</p>
+      <p>💰 ₹${option.estimated_cost}</p>
+    `;
+
+    card.addEventListener("click", () => {
+      document
+        .querySelectorAll(".transport-card")
+        .forEach((c) => c.classList.remove("selected"));
+
+      card.classList.add("selected");
+      selectedTransport = option;
+      lockBtn.disabled = false;
+    });
+
+    container.appendChild(card);
+  });
+}
+
+document.getElementById("lockTransportBtn").addEventListener("click", () => {
+  if (!selectedTransport) return;
+
+  lockedTransport = selectedTransport;
+  alert(`Transport locked: ${lockedTransport.mode}`);
+
+  document
+    .querySelectorAll(".transport-card")
+    .forEach((c) => (c.style.pointerEvents = "none"));
+});

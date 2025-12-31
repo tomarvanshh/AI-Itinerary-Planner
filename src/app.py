@@ -3,12 +3,18 @@ from flask_cors import CORS
 import requests
 import math
 import os
+from dotenv import load_dotenv
+load_dotenv()
+
 
 app = Flask(__name__)
 CORS(app)
 
 # Load Mapbox token from environment variable to avoid committing secrets to source control
 MAPBOX_TOKEN = os.getenv("MAPBOX_TOKEN")
+if not MAPBOX_TOKEN:
+    raise RuntimeError("MAPBOX_TOKEN not found in environment variables")
+
 
 MAPBOX_URL = "https://api.mapbox.com/geocoding/v5/mapbox.places"
 
@@ -42,8 +48,6 @@ def search_city():
         print("Mapbox error:", e)
         return jsonify([]), 500
     
-
-import math
 
 @app.route("/api/distance", methods=["POST"])
 def calculate_distance():
@@ -82,57 +86,82 @@ def calculate_distance():
 
 @app.route("/api/transport", methods=["POST"])
 def recommend_transport():
-    data = request.get_json()
+    data = request.json
 
-    try:
-        distance = float(data["distance_km"])
-        days = int(data["days"])
-        budget = float(data["budget"])
+    distance = float(data["distance_km"])
+    days = int(data["days"])
+    budget = float(data["budget"])
 
-        options = []
+    # Transport profiles
+    transport_modes = [
+        {
+            "mode": "Bus",
+            "speed": 50,            # km/h
+            "cost_per_km": 2,
+            "max_distance": 500
+        },
+        {
+            "mode": "Train",
+            "speed": 80,
+            "cost_per_km": 1.5,
+            "max_distance": 1200
+        },
+        {
+            "mode": "Flight",
+            "speed": 600,
+            "cost_per_km": 5,
+            "max_distance": 5000
+        },
+        {
+            "mode": "Car",
+            "speed": 60,
+            "cost_per_km": 3,
+            "max_distance": 700
+        }
+    ]
 
-        # Bus
-        bus_cost = distance * 1.5
-        bus_time = distance / 40
-        if distance <= 300 and bus_cost <= budget:
-            options.append({
-                "mode": "Bus",
-                "estimated_cost": round(bus_cost, 2),
-                "estimated_time_hr": round(bus_time, 1)
-            })
+    results = []
 
-        # Train
-        train_cost = distance * 2.5
-        train_time = distance / 70
-        if distance <= 800 and train_cost <= budget:
-            options.append({
-                "mode": "Train",
-                "estimated_cost": round(train_cost, 2),
-                "estimated_time_hr": round(train_time, 1)
-            })
+    for t in transport_modes:
+        time_hr = distance / t["speed"]
+        cost = distance * t["cost_per_km"]
 
-        # Flight
-        flight_cost = distance * 5
-        flight_time = (distance / 600) + 2  # incl airport time
-        if distance >= 300 and flight_cost <= budget:
-            options.append({
-                "mode": "Flight",
-                "estimated_cost": round(flight_cost, 2),
-                "estimated_time_hr": round(flight_time, 1)
-            })
+        score = 100
 
-        # Prefer flight if days are very limited
-        recommended = options[0]["mode"] if options else "No suitable transport found"
+        # Distance penalty
+        if distance > t["max_distance"]:
+            score -= 40
 
-        return jsonify({
-            "recommended": recommended,
-            "options": options
+        # Budget penalty
+        if cost > budget:
+            score -= 50
+        else:
+            score += 10
+
+        # Time penalty (more than 1 day travel)
+        if time_hr > 24:
+            score -= 20
+
+        # Soft realism penalty
+        if t["mode"] == "Flight" and distance < 200:
+            score -= 30
+        if t["mode"] == "Bus" and distance > 800:
+            score -= 30
+
+        results.append({
+            "mode": t["mode"],
+            "score": score,
+            "estimated_time_hr": round(time_hr, 1),
+            "estimated_cost": int(cost)
         })
 
-    except Exception as e:
-        print("Transport logic error:", e)
-        return jsonify({"error": "Invalid input"}), 400
+    # Sort by score
+    results.sort(key=lambda x: x["score"], reverse=True)
 
+    return jsonify({
+        "recommended": results[0]["mode"],
+        "options": results[:3]
+    })
 
 
 if __name__ == "__main__":
