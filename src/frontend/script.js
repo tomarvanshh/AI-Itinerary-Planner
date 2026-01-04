@@ -117,7 +117,7 @@ function setupCityAutocomplete(inputId, suggestionBoxId) {
   let currentIndex = -1;
   let currentItems = [];
 
-  const debouncedSearch = debounce(searchCity, 900);
+  const debouncedSearch = debounce(searchCity, 500);
 
   input.addEventListener("input", () => {
     const query = input.value.trim();
@@ -246,7 +246,7 @@ function updateActiveItem(items, index) {
 
 function showTransportOptions(data) {
   const section = document.getElementById("transportSection");
-  const container = document.getElementById("transportOptions");
+  const container = document.getElementById("transportCards");
   const lockBtn = document.getElementById("lockTransportBtn");
 
   container.innerHTML = "";
@@ -255,17 +255,34 @@ function showTransportOptions(data) {
 
   data.options.forEach((option) => {
     const card = document.createElement("div");
-    card.className = "transport-card";
+    const modeClass = option.mode.toLowerCase();
+
+    card.className = `transport-card ${modeClass}`;
 
     if (option.mode === data.recommended) {
       card.classList.add("recommended");
-      card.innerHTML += `<div class="badge">Recommended</div>`;
     }
 
-    card.innerHTML += `
-      <h4>${option.mode}</h4>
-      <p>⏱ ${option.estimated_time_hr} hrs</p>
-      <p>💰 ₹${option.estimated_cost}</p>
+    card.innerHTML = `
+      <div class="transport-overlay">
+        <div class="transport-top">
+          ${
+            option.mode === data.recommended
+              ? `<span class="badge">Recommended</span>`
+              : ""
+          }
+          <div class="transport-name">${option.mode}</div>
+        </div>
+
+        <div class="transport-middle">
+          ${sourceCity.name} → ${destinationCity.name}
+        </div>
+
+        <div class="transport-bottom">
+          <div class="transport-price">₹${option.estimated_cost}</div>
+          <div class="view-details">View details</div>
+        </div>
+      </div>
     `;
 
     card.addEventListener("click", () => {
@@ -275,20 +292,82 @@ function showTransportOptions(data) {
 
       card.classList.add("selected");
       selectedTransport = option;
+      // Unlock if user is changing selection
+      lockedTransport = null;
+
       lockBtn.disabled = false;
+      lockBtn.innerText = "Continue with selected transport";
     });
 
     container.appendChild(card);
   });
 }
 
-document.getElementById("lockTransportBtn").addEventListener("click", () => {
+const lockBtn = document.getElementById("lockTransportBtn");
+
+lockBtn.addEventListener("click", () => {
   if (!selectedTransport) return;
 
-  lockedTransport = selectedTransport;
-  alert(`Transport locked: ${lockedTransport.mode}`);
+  // lockedTransport = selectedTransport;
+  const lockedTransport = {
+    mode: selectedTransport.mode, // REQUIRED
+    price: selectedTransport.price,
+    duration: selectedTransport.time,
+    source: sourceCity.name,
+    destination: destinationCity.name,
+  };
 
+  // Remove old locks
   document
     .querySelectorAll(".transport-card")
-    .forEach((c) => (c.style.pointerEvents = "none"));
+    .forEach((card) => card.classList.remove("locked"));
+
+  // Lock selected card
+  const selectedCard = document.querySelector(".transport-card.selected");
+  if (selectedCard) {
+    selectedCard.classList.add("locked");
+  }
+
+  // Change button text
+  lockBtn.innerText = "Change transport";
+
+  console.log("Transport locked:", lockedTransport);
 });
+
+fetch("http://127.0.0.1:5000/api/lock-transport", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify(lockedTransport),
+})
+  .then((res) => res.json())
+  .then((data) => {
+    if (data.error) {
+      alert("Please Select transport option properly");
+      return;
+    }
+    console.log("Backend lock:", data);
+    showHotelSection(); // 👈 move to hotels
+  });
+
+function showHotelSection() {
+  fetch("http://127.0.0.1:5000/api/hotels", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      city: destinationCity.name,
+      adults: document.getElementById("adults").value,
+      days: document.getElementById("days").value,
+      budget: budgetSlider.value,
+    }),
+  })
+    .then((res) => res.json())
+    .then((data) => renderHotels(data.hotels));
+}
+
+function lockHotel(hotel) {
+  fetch("http://127.0.0.1:5000/api/lock-hotel", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(hotel),
+  });
+}
