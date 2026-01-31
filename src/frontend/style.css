@@ -577,7 +577,7 @@ input.invalid {
 .transport-card.flight::before {
   background-image: url("images/flight.jpg");
 }
-.transport-card.car::before {
+.transport-card.cab::before {
   background-image: url("images/cab.jpg");
 }
 
