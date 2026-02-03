@@ -39,3 +39,17 @@ export async function fetchCities(query) {
 
   return res.json();
 }
+export async function fetchItinerary(data) {
+  const res = await fetch("http://127.0.0.1:5000/api/generate-itinerary", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+
+  if (!res.ok) {
+    throw new Error("Failed to generate itinerary");
+  }
+
+  return res.json();
+}
+

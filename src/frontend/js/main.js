@@ -8,6 +8,10 @@ import {
   fetchDestinationPlaces,
   renderPlacesDebug
 } from "./itinerary.js";
+import { fetchItinerary } from "./api.js";
+import { getPreferences } from "./preferences.js";
+import { renderItinerary } from "./itinerary-ui.js";
+
 
 
 const budgetSlider = document.getElementById("budget");
@@ -42,10 +46,20 @@ document.getElementById("tripForm").addEventListener("submit", async (e) => {
       budget: budgetSlider.value
     });
 
+    const places = await fetchDestinationPlaces();
+
+    const itinerary = await fetchItinerary({
+    places: places,  
+    days: document.getElementById("days").value,
+    preferences: getPreferences()
+    });
+
+
+
+    renderItinerary(itinerary);
+
     showTransportOptions(transportRes);
 
-
-    const places = await fetchDestinationPlaces();
     renderPlacesDebug(places);
 
   } catch (err) {

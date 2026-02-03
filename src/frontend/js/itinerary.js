@@ -12,7 +12,8 @@ export async function fetchDestinationPlaces() {
     body: JSON.stringify({
       lat: destinationCity.lat,
       lon: destinationCity.lon,
-    }),
+      days: document.getElementById("days").value
+    })
   });
 
   if (!res.ok) {

@@ -6,7 +6,7 @@ import {
 
 
 
-function debounce(fn, delay = 800) {
+function debounce(fn, delay = 200) {
   let timer;
   return (...args) => {
     clearTimeout(timer);
@@ -21,7 +21,7 @@ function setupCityAutocomplete(inputId, suggestionBoxId) {
   let currentIndex = -1;
   let currentItems = [];
 
-  const debouncedSearch = debounce(searchCity, 500);
+  const debouncedSearch = debounce(searchCity, 200);
 
   input.addEventListener("input", () => {
     const query = input.value.trim();
@@ -81,6 +81,7 @@ async function searchCity(query, box, input, onRendered) {
   try {
     const data = await fetchCities(query);
     const items = renderCitySuggestions(data, box, input);
+    console.log("data inside searchCity() in searchCity.js: ",data)
     onRendered(items);
   } catch (err) {
     console.error("City search error:", err);

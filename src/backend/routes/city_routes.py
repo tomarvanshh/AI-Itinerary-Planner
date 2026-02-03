@@ -27,5 +27,6 @@ def search_city():
 
     response = requests.get(url, params=params)
     data = response.json()
+    print("inside routes -> city_routes.py -> route -> search-city: data for city from Mapbox is :",data)
 
     return jsonify(data.get("features", []))
