@@ -2,69 +2,107 @@ import "./city.js";
 import "./transport.js";
 import { showTransportOptions } from "./transport.js";
 import "./preferences.js";
-import { fetchDistance, fetchTransport } from "./api.js";
+import { fetchDistance, fetchTransport, fetchItinerary } from "./api.js";
 import { sourceCity, destinationCity } from "./state.js";
-import {
-  fetchDestinationPlaces,
-  renderPlacesDebug
-} from "./itinerary.js";
-import { fetchItinerary } from "./api.js";
+import { fetchDestinationPlaces, renderPlacesDebug } from "./itinerary.js";
 import { getPreferences } from "./preferences.js";
 import { renderItinerary } from "./itinerary-ui.js";
+import { showHotelOptions, onHotelConfirmed, getSelectedHotel } from "./hotel.js";
 
+// State to hold data captured during form submission for the final itinerary generation
+let tripContext = {
+  places: null,
+  days: null,
+  budget: null
+};
 
-
-const budgetSlider = document.getElementById("budget");
-const budgetValue = document.getElementById("budgetValue");
-
-budgetSlider.value = 50000;
-budgetValue.innerText = `₹${budgetSlider.value}`;
-
-budgetSlider.addEventListener("input", () => {
-  budgetValue.innerText = `₹${budgetSlider.value}`;
-});
-
+/**
+ * Main Form Submission Handler
+ * Triggers distance calculation, real-time transport fetching, 
+ * and hotel option display.
+ */
 document.getElementById("tripForm").addEventListener("submit", async (e) => {
   e.preventDefault();
 
+  // 1. Validation: Ensure cities are selected via Mapbox
   if (!sourceCity || !destinationCity) {
-    alert("Please select valid cities");
+    alert("Please select valid source and destination cities.");
+    return;
+  }
+
+  // 2. Capture Input Values
+  const budgetVal = parseFloat(document.getElementById("budget").value);
+  const daysVal = document.getElementById("days").value;
+
+  if (isNaN(budgetVal) || budgetVal <= 0) {
+    alert("Please enter a valid budget.");
     return;
   }
 
   try {
-    const payload = {
+    // 3. Calculate Geospatial Distance
+    const distanceRes = await fetchDistance({
       source: sourceCity,
       destination: destinationCity
-    };
+    });
 
-    const distanceRes = await fetchDistance(payload);
-
+    // 4. Fetch Real-time Transport (Flights/Trains)
     const transportRes = await fetchTransport({
       distance_km: distanceRes.distance_km,
-      days: document.getElementById("days").value,
-      budget: budgetSlider.value
+      days: daysVal,
+      budget: budgetVal,
+      source: sourceCity,      // Passed as object {name, lat, lon}
+      destination: destinationCity,
+      date: "2026-03-15"      // Using fixed date for project testing
     });
 
+    // 5. Fetch Potential Attractions at Destination
     const places = await fetchDestinationPlaces();
 
-    const itinerary = await fetchItinerary({
-    places: places,  
-    days: document.getElementById("days").value,
-    preferences: getPreferences()
-    });
-
-
-
-    renderItinerary(itinerary);
-
+    // 6. Update UI Components
     showTransportOptions(transportRes);
-
-    renderPlacesDebug(places);
+    showHotelOptions(budgetVal, daysVal); // Centers daily travel around selected hotel
+    
+    // 7. Store Context for Itinerary Generation
+    tripContext.places = places;
+    tripContext.days = daysVal;
+    tripContext.budget = budgetVal;
 
   } catch (err) {
     console.error("Trip generation error:", err);
-    alert("Something went wrong. Please try again.");
+    alert("Something went wrong while fetching travel options. Please try again.");
   }
 });
 
+/**
+ * Itinerary Generation Handler
+ * Triggered only after a user confirms their hotel selection.
+ */
+onHotelConfirmed(async () => {
+  // Check if initial form was submitted
+  if (!tripContext.places) { 
+    alert("Please search for a destination before confirming a hotel.");  
+    return; 
+  }
+
+  try {
+    // Show a basic loading indicator if needed
+    console.log("Generating personalized itinerary...");
+
+    // Fetch the final refined itinerary from LLM
+    const itinerary = await fetchItinerary({
+      places: tripContext.places,
+      days: tripContext.days,
+      preferences: getPreferences(),
+      selected_hotel: getSelectedHotel() // Coordinates used for daily clustering
+    });
+
+    // Render results to the UI
+    renderItinerary(itinerary);
+    renderPlacesDebug(tripContext.places);
+
+  } catch (err) {
+    console.error("Itinerary error after hotel confirmation:", err);
+    alert("Failed to generate itinerary. Check backend logs for LLM errors.");
+  }
+});

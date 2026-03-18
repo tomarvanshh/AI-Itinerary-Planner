@@ -12,14 +12,16 @@ def generate():
         places = data.get("places", [])
         days = int(data.get("days", 1))
         preferences = data.get("preferences", [])
-
+        # ADD THIS: Capture the hotel selected by the user
+        selected_hotel = data.get("selected_hotel")
         if not places:
             return jsonify({"error": "No places provided"}), 400
 
         raw_itinerary = generate_itinerary(
             places,
             days,
-            preferences
+            preferences,
+            selected_hotel=selected_hotel  # Pass the selected hotel to the itinerary generator
         )
 
         # Optional LLM refinement

@@ -7,7 +7,7 @@ MAX_HOURS_PER_DAY = 8
 CITY_TRAVEL_SPEED = 25
 
 
-def generate_itinerary(places, days_requested, user_preferences):
+def generate_itinerary(places, days_requested, user_preferences,selected_hotel=None):
     if not places:
         return []
 
@@ -43,7 +43,7 @@ def generate_itinerary(places, days_requested, user_preferences):
 
         day_plan = []   
         total_time = 0      ## start of the day time = 0
-        previous_place = None   ## None for start of the day
+        previous_place = selected_hotel   ## hotel for start of the day
 
         for place in cluster_sorted:
             place_time = place.get("avg_time_hr", 1.5)

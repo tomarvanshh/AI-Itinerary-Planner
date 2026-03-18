@@ -82,6 +82,10 @@ def fetch_places_service(lat, lon):
 
         tags = map_place_types(p.get("types", []))
         avg_time, priority = estimate_place_weight(tags)
+        # Get the first photo reference if it exists
+        photo_ref = None
+        if p.get("photos"):
+            photo_ref = p["photos"][0].get("photo_reference")
 
         normalized.append({
             "id": p.get("place_id"),
@@ -91,7 +95,8 @@ def fetch_places_service(lat, lon):
             "priority": priority,
             "lat": p["geometry"]["location"]["lat"],
             "lon": p["geometry"]["location"]["lng"],
-            "rating": p.get("rating", 0)
+            "rating": p.get("rating", 0),
+            "photo_ref": photo_ref  # Send this to frontend
         })
 
     return normalized

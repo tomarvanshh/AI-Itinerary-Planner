@@ -1,90 +1,88 @@
 import {
   sourceCity,
   destinationCity,
-  selectedTransport,
   setSelectedTransport,
   setLockedTransport
 } from "./state.js";
 
 const lockBtn = document.getElementById("lockTransportBtn");
+const transportGrid = document.getElementById("transportCards"); // Ensure this ID matches your HTML
 
-export function showTransportOptions(data) {
+export function showTransportOptions(options) {
   if (!sourceCity || !destinationCity) return;
 
   const section = document.getElementById("transportSection");
-  const container = document.getElementById("transportCards");
-
-  container.innerHTML = "";
+  
+  // Clear existing cards
+  transportGrid.innerHTML = ""; 
   section.style.display = "block";
   lockBtn.disabled = true;
 
-  data.options.forEach((option) => {
+  if (!options || options.length === 0) {
+    transportGrid.innerHTML = "<p class='error-text'>No real-time transport options found.</p>";
+    return;
+  }
+
+  options.forEach((option) => {
     const card = document.createElement("div");
-    const modeClass = option.mode.toLowerCase();
+    
+    // Determine card style based on transport type (Flight vs Train)
+    const isFlight = option.type.toLowerCase().includes('flight');
+    card.className = `transport-card ${isFlight ? 'flight-card' : 'train-card'}`;
 
-    card.className = `transport-card ${modeClass}`;
-
-    if (option.mode === data.recommended) {
-      card.classList.add("recommended");
-    }
+    // Generate dynamic titles and badges
+    const title = isFlight ? `Flight: ${option.provider}` : `Train: ${option.name}`;
+    const subTitle = isFlight ? `Carrier Code: ${option.provider}` : `Train No: ${option.number}`;
+    const estimateBadge = option.is_estimate ? "<span class='badge-estimate'>Estimated</span>" : "";
 
     card.innerHTML = `
       <div class="transport-overlay">
         <div class="transport-top">
-          ${
-            option.mode === data.recommended
-              ? `<span class="badge">Recommended</span>`
-              : ""
-          }
-          <div class="transport-name">${option.mode}</div>
+          ${estimateBadge}
+          <div class="transport-name">${title}</div>
         </div>
 
         <div class="transport-middle">
-          ${sourceCity.name} → ${destinationCity.name}
+          <p>${subTitle}</p>
+          <small>${sourceCity.name} → ${destinationCity.name}</small>
         </div>
 
         <div class="transport-bottom">
-          <div class="transport-price">₹${option.estimated_cost}</div>
-          <div class="view-details">View details</div>
+          <div class="transport-price">₹${option.price}</div>
+          <div class="transport-duration"><i class="fas fa-clock"></i> ${option.duration}</div>
         </div>
       </div>
     `;
 
     card.addEventListener("click", () => {
-      document
-        .querySelectorAll(".transport-card")
-        .forEach((c) => c.classList.remove("selected"));
-
+      // Handle visual selection
+      document.querySelectorAll(".transport-card").forEach((c) => c.classList.remove("selected"));
       card.classList.add("selected");
 
+      // Update state
       setSelectedTransport(option);
       setLockedTransport(null);
 
       lockBtn.disabled = false;
-      lockBtn.innerText = "Continue with selected transport";
+      lockBtn.innerText = `Continue with ${option.type}`;
     });
 
-    container.appendChild(card);
+    transportGrid.appendChild(card);
   });
 }
 
 lockBtn.onclick = async () => {
+  // Access the currently selected transport from state
+  const { selectedTransport } = await import("./state.js"); 
   if (!selectedTransport) return;
 
   const payload = {
-    mode: selectedTransport.mode,
-    price: selectedTransport.estimated_cost,
-    duration_hr: selectedTransport.estimated_time_hr,
-    source: {
-      name: sourceCity.name,
-      lat: sourceCity.lat,
-      lon: sourceCity.lon,
-    },
-    destination: {
-      name: destinationCity.name,
-      lat: destinationCity.lat,
-      lon: destinationCity.lon,
-    },
+    type: selectedTransport.type,
+    price: selectedTransport.price,
+    duration: selectedTransport.duration,
+    provider: selectedTransport.provider || selectedTransport.name,
+    source: sourceCity.name,
+    destination: destinationCity.name
   };
 
   try {
@@ -103,14 +101,12 @@ lockBtn.onclick = async () => {
 
     setLockedTransport(payload);
 
-    document
-      .querySelectorAll(".transport-card")
-      .forEach((card) => card.classList.remove("locked"));
-
+    // Update UI to show locked state
+    document.querySelectorAll(".transport-card").forEach((card) => card.classList.remove("locked"));
     const selectedCard = document.querySelector(".transport-card.selected");
     if (selectedCard) selectedCard.classList.add("locked");
 
-    lockBtn.innerText = "Change transport";
+    lockBtn.innerText = "Change Selection";
 
   } catch (err) {
     console.error("Transport lock error:", err);
