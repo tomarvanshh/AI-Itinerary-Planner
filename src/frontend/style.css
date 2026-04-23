@@ -480,17 +480,21 @@ input.invalid {
   box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
   border: 3px solid transparent;
   transition: all 0.3s ease;
+  background-color: #333;
+  /* Fallback color if image fails */
 }
 
-/* Background image */
+/* Background image layer */
 .transport-card::before {
   content: "";
   position: absolute;
   inset: 0;
   background-size: cover;
   background-position: center;
-  filter: blur(2px) brightness(0.6);
-  transform: scale(1.1);
+  filter: brightness(0.6);
+  /* Removed blur for cleaner research paper look */
+  z-index: 0;
+  /* Ensures it is the bottom layer */
 }
 
 /* Overlay */
@@ -503,8 +507,10 @@ input.invalid {
   justify-content: space-between;
   color: #fff;
   z-index: 1;
+  /* Sits above the ::before image */
+  background: rgba(0, 0, 0, 0.2);
+  /* Subtle dark tint for readability */
 }
-
 /* Top */
 .transport-top {
   text-align: left;
@@ -693,4 +699,161 @@ input.invalid {
 .selected {
   border: 2px solid #0a3d91;
   background: rgba(10, 61, 145, 0.05);
+}
+
+/* ================= LOADING OVERLAY ================= */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(5px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 5px solid #f3f3f3;
+  border-top: 5px solid #3498db;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+.badge-recommended {
+  background: gold;
+  color: black;
+  padding: 4px 8px;
+  border-radius: 8px;
+  font-weight: bold;
+}
+.meal-row {
+  background: #1f7502;
+  padding: 10px;
+  border-radius: 10px;
+  margin: 8px 0;
+  font-weight: bold;
+}
+.change-meal-btn {
+  margin-left: 10px;
+  padding: 5px 10px;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.restaurant-popup {
+  position: fixed;
+  top: 20%;
+  left: 40%;
+  background: white;
+  padding: 15px;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+}
+
+.restaurant-item {
+  padding: 8px;
+  cursor: pointer;
+}
+
+.restaurant-item:hover {
+  background: #eee;
+}
+.meal-link {
+  margin-left: 15px;
+  padding: 6px 12px;
+  /* background: #0077ff; */
+  color: white;
+  border-radius: 5px;
+  text-decoration: none;
+  font-size: 13px;
+}
+
+.meal-link:hover {
+  background: #0077ff;
+}
+.meal-btn{
+  margin-left: 15px;
+  padding: 6px 12px;
+  background: #0077ff;
+  color: white;
+  border-radius: 5px;
+  text-decoration: none;
+  font-size: 13px;
+}
+.place-details{
+  margin-top: 6px;
+  font-size: 13px;
+  color: #555;
+}
+
+.place-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #ffffff;
+  padding: 15px;
+  margin: 10px 0;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.place-left {
+  flex: 2;
+}
+
+.place-title {
+  font-size: 18px;
+  font-weight: bold;
+  color: #1e3a8a;
+  margin-bottom: 6px;
+}
+
+.place-details {
+  font-size: 14px;
+  color: #444;
+  line-height: 1.5;
+}
+
+.place-right {
+  flex: 1;
+  text-align: right;
+}
+
+.place-img {
+  width: 120px;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 10px;
+}
+.meal-card {
+  background: #166534;
+  color: white;
+  padding: 12px;
+  border-radius: 10px;
+  margin: 12px 0;
+  font-weight: 500;
+}
+
+.meal-link a {
+  color: #93c5fd;
+  font-size: 13px;
 }

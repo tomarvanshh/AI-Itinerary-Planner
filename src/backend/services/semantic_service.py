@@ -27,7 +27,7 @@ def compute_similarity(user_prefs, places):
     # Combine user preferences into one text
     user_text = " ".join(user_prefs)
 
-    user_embedding = model.encode([user_text])[0]
+    user_embedding = model.encode([user_text])[0]   # converts user preference to vector embedding
 
     place_texts = []
 
@@ -36,9 +36,9 @@ def compute_similarity(user_prefs, places):
         combined = f"{p['name']} {' '.join(p.get('tags', []))}"
         place_texts.append(combined)
 
-    place_embeddings = model.encode(place_texts)
+    place_embeddings = model.encode(place_texts)    # converts place descriptions to vector embeddings
 
-    similarities = cosine_similarity(
+    similarities = cosine_similarity(   # computes cosine similarity between user embedding and place embeddings
         [user_embedding],
         place_embeddings
     )[0]
@@ -46,7 +46,7 @@ def compute_similarity(user_prefs, places):
     scored_places = []
 
     for i, place in enumerate(places):
-        place["semantic_score"] = float(similarities[i])
+        place["semantic_score"] = float(similarities[i])    # loop through places and assign similarity score to each place
         scored_places.append(place)
 
     # Sort by semantic similarity

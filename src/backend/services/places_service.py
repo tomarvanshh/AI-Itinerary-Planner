@@ -1,102 +1,87 @@
 import requests
 from flask import current_app
 
-
-# ---------------------------------------------------
-# Mapping Google place types → internal tags
-# ---------------------------------------------------
-def map_place_types(types):
-    tag_map = {
-        "natural_feature": "nature",
-        "park": "nature",
-        "museum": "culture",
-        "hindu_temple": "temple",
-        "church": "culture",
-        "mosque": "culture",
-        "cafe": "cafes",
-        "restaurant": "food",
-        "amusement_park": "adventure",
-        "zoo": "family"
-    }
-
-    tags = set()
-
-    for t in types:
-        if t in tag_map:
-            tags.add(tag_map[t])
-
-    if not tags:
-        tags.add("general")
-
-    return list(tags)
+GOOGLE_PLACES_URL = "https://places.googleapis.com/v1/places:searchNearby"
 
 
-# ---------------------------------------------------
-# Estimate time + priority weight
-# ---------------------------------------------------
-def estimate_place_weight(tags):
-    avg_time = 1.5
-    priority = 5
-
-    if "nature" in tags:
-        avg_time += 0.5
-        priority += 2
-
-    if "adventure" in tags:
-        avg_time += 1
-        priority += 2
-
-    if "culture" in tags or "temple" in tags:
-        priority += 1
-
-    if "cafes" in tags:
-        avg_time += 0.3
-
-    return avg_time, priority
-
-
-# ---------------------------------------------------
-# Main fetch service
-# ---------------------------------------------------
 def fetch_places_service(lat, lon):
+    api_key = current_app.config["GOOGLE_PLACES_API_KEY"]
 
-    GOOGLE_API_KEY = current_app.config["GOOGLE_PLACES_API_KEY"]
-
-    url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json"
-
-    params = {
-        "location": f"{lat},{lon}",
-        "radius": 15000,
-        "keyword": "tourist attractions",
-        "key": GOOGLE_API_KEY
+    headers = {
+        "Content-Type": "application/json",
+        "X-Goog-Api-Key": api_key,
+        "X-Goog-FieldMask": "places.displayName,places.location,places.rating,places.userRatingCount,places.types,places.photos,places.generativeSummary,places.reviewSummary"
     }
 
-    res = requests.get(url, params=params, timeout=5)
-    res.raise_for_status()
+    body = {
+        "includedTypes": [
+            "tourist_attraction",
+            "mountain_peak",
+            "scenic_spot",
+            "hiking_area",
+            "national_park",
+            "historical_landmark",
+            "museum",
+            "amusement_park"
+        ],
+        "maxResultCount": 20,
+        "locationRestriction": {
+            "circle": {
+                "center": {
+                    "latitude": lat,
+                    "longitude": lon
+                },
+                "radius": 20000.0
+            }
+        }
+    }
 
-    raw_places = res.json().get("results", [])
+    response = requests.post(GOOGLE_PLACES_URL, headers=headers, json=body)
+    data = response.json()
 
-    normalized = []
 
-    for p in raw_places:
+    places = []
 
-        tags = map_place_types(p.get("types", []))
-        avg_time, priority = estimate_place_weight(tags)
-        # Get the first photo reference if it exists
+    for p in data.get("places", []):
+        location = p.get("location", {})
+        display_name = p.get("displayName", {}).get("text")
+
+        gen_summ =""
+        review_summ = ""
+
+        # Handle generative summary
+        gen_data = p.get("generativeSummary")
+        if(isinstance(gen_data,dict)):
+            overview = gen_data.get("overview")
+            if(isinstance(overview,dict)):
+                gen_summ = overview.get("text","")
+
+        # Handle review summary
+        review_data = p.get("reviewSummary")
+        if isinstance(review_data, dict):
+            review_text = review_data.get("text")
+            if isinstance(review_text, dict):
+                review_summ = review_text.get("text", "")
+
+        if not display_name or not location:
+            continue
+
+        photos = p.get("photos", [])
         photo_ref = None
-        if p.get("photos"):
-            photo_ref = p["photos"][0].get("photo_reference")
+        if photos:
+            photo_ref = photos[0].get("name")
 
-        normalized.append({
-            "id": p.get("place_id"),
-            "name": p.get("name"),
-            "tags": tags,
-            "avg_time_hr": avg_time,
-            "priority": priority,
-            "lat": p["geometry"]["location"]["lat"],
-            "lon": p["geometry"]["location"]["lng"],
+        places.append({
+            "name": display_name,
+            "lat": location.get("latitude"),
+            "lon": location.get("longitude"),
             "rating": p.get("rating", 0),
-            "photo_ref": photo_ref  # Send this to frontend
+            "user_ratings_total": p.get("userRatingCount", 0),
+            "types": p.get("types", []),
+            "photo_ref": photo_ref,
+            "generative_summary": gen_summ[:200] if gen_summ else "",  # Truncate to 200 chars for brevity
+            "review_summary": review_summ[:200] if review_summ else ""  # Truncate to 200 chars for brevity
+
         })
 
-    return normalized
+    return places

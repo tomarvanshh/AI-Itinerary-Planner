@@ -52,7 +52,7 @@ function renderHotelCards(hotels) {
     <p class="hotel-address"><i class="fas fa-map-marker-alt"></i> ${hotel.address}</p>
     <div class="hotel-meta">
       <span class="rating">⭐ ${hotel.rating || 'N/A'}</span>
-      <span class="price-tag">Avg. ₹${hotel.estimated_price}/night</span>
+      <span class="price-tag">Avg. ₹1200/night</span>
     </div>
   </div>
 `;
@@ -75,7 +75,7 @@ function renderHotelCards(hotels) {
 let hotelConfirmedCallback = null;
 
 confirmBtn.addEventListener("click", () => {
-    alert(`Accommodation locked: ${selectedHotel.name}. We will set up n8n booking for this tomorrow!`);
+    alert(`Accommodation locked: ${selectedHotel.name}`);
     if (hotelConfirmedCallback) {
         hotelConfirmedCallback(selectedHotel);
     }

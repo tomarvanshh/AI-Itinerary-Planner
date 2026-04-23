@@ -14,6 +14,7 @@ def generate():
         preferences = data.get("preferences", [])
         # ADD THIS: Capture the hotel selected by the user
         selected_hotel = data.get("selected_hotel")
+        budget = float(data.get("budget", 10000))
         if not places:
             return jsonify({"error": "No places provided"}), 400
 
@@ -21,7 +22,8 @@ def generate():
             places,
             days,
             preferences,
-            selected_hotel=selected_hotel  # Pass the selected hotel to the itinerary generator
+            selected_hotel=selected_hotel,  # Pass the selected hotel to the itinerary generator
+            budget=budget  # Pass the user's total budget to the itinerary generator
         )
 
         # Optional LLM refinement

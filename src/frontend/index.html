@@ -1,7 +1,6 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-
-<head>
+  <head>
     <meta charset="UTF-8" />
     <title>PlanMySafar – AI Trip Planner</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -10,136 +9,174 @@
     <link rel="stylesheet" href="style.css" />
 
     <!-- Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
-</head>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    />
+  </head>
 
-<body>
-
+  <body>
+    <!-- LOADING OVERLAY -->
+    <div id="loadingOverlay" class="loading-overlay" style="display: none">
+      <div class="spinner"></div>
+      <p id="loadingText">Fetching the best options for you...</p>
+    </div>
     <!-- ===== NAVBAR ===== -->
     <header class="navbar">
-        <div class="nav-left">
-            <img src="planmysafar.jpeg" class="logo" alt="PlanMySafar" />
-            <span class="brand">PlanMySafar</span>
-        </div>
+      <div class="nav-left">
+        <img src="planmysafar.jpeg" class="logo" alt="PlanMySafar" />
+        <span class="brand">PlanMySafar</span>
+      </div>
 
-        <nav class="nav-center">
-            <a href="#">Explore</a>
-            <a href="#">Hot Places</a>
-        </nav>
+      <nav class="nav-center">
+        <a href="#">Explore</a>
+        <a href="#">Hot Places</a>
+      </nav>
 
-        <div class="nav-right">
-            <button class="login-btn">Login / Sign up</button>
-        </div>
+      <div class="nav-right">
+        <button class="login-btn">Login / Sign up</button>
+      </div>
     </header>
 
     <!-- ===== HERO SECTION ===== -->
     <section class="hero">
-        <div class="hero-overlay"></div>
+      <div class="hero-overlay"></div>
 
-        <div class="hero-content">
-            <h1>Plan your next adventure with AI</h1>
-            <p>Personalized itineraries. Smarter travel decisions.</p>
+      <div class="hero-content">
+        <h1>Plan your next adventure with AI</h1>
+        <p>Personalized itineraries. Smarter travel decisions.</p>
 
-            <!-- ===== SEARCH CARD ===== -->
-            <form id="tripForm" class="search-card">
-
-                <div class="row travel-row">
-                    <div class="from-to-group">
-
-                        <div class="input-wrapper">
-                            <label class="field-label">From</label>
-                            <div class="input-group autocomplete">
-                                <input type="text" id="source" placeholder="Source city" autocomplete="off" />
-                                <div id="sourceSuggestions" class="suggestions"></div>
-                            </div>
-                        </div>
-
-                        <div class="arrow">→</div>
-
-                        <div class="input-wrapper">
-                            <label class="field-label">To</label>
-                            <div class="input-group autocomplete">
-                                <input type="text" id="destination" placeholder="Destination city" autocomplete="off" />
-                                <div id="destinationSuggestions" class="suggestions"></div>
-                            </div>
-                        </div>
-
-                    </div>
-
-                    <div class="input-wrapper days-group">
-                        <label class="field-label">Days</label>
-                        <input type="number" id="days" placeholder="Days" min="1" />
-                    </div>
+        <!-- ===== SEARCH CARD ===== -->
+        <form id="tripForm" class="search-card">
+          <div class="row travel-row">
+            <div class="from-to-group">
+              <div class="input-wrapper">
+                <label class="field-label">From</label>
+                <div class="input-group autocomplete">
+                  <input
+                    type="text"
+                    id="source"
+                    placeholder="Source city"
+                    autocomplete="off"
+                  />
+                  <div id="sourceSuggestions" class="suggestions"></div>
                 </div>
+              </div>
 
+              <div class="arrow">→</div>
 
-                <div class="row">
-                    <div class="preferences">
-                        <label class="field-label">Travel Preferences</label>
-                        <div id="tagContainer" class="tag-container">
-                            <input id="tagInput" placeholder="Type & press Enter" />
-                        </div>
-                    </div>
-
-                    <!-- Adults -->
-                    <div class="adults-group">
-                        <label>No. of Adults</label>
-                        <input type="number" id="adults" min="1" value="1" placeholder="Adults" />
-                    </div>
-
+              <div class="input-wrapper">
+                <label class="field-label">To</label>
+                <div class="input-group autocomplete">
+                  <input
+                    type="text"
+                    id="destination"
+                    placeholder="Destination city"
+                    autocomplete="off"
+                  />
+                  <div id="destinationSuggestions" class="suggestions"></div>
                 </div>
-
-            <div class="row">
-                <div class="budget-group" style="width:100%;">
-                    <label for="budget">Budget (₹)</label>
-                    <input type="number" id="budget" placeholder="Rupees" min="100" step="0.01"
-                        style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.1); color: white;" />
-                </div>
+              </div>
             </div>
 
-
-                <button class="cta-btn">Proceed</button>
-
-            </form>
-            <!-- TRANSPORT OPTIONS -->
-            <!-- TRANSPORT SELECTION -->
-            <div id="transportSection" class="transport-section" style="display:none;">
-                <h2 class="section-title">Choose your transport</h2>
-
-                <div id="transportCards" class="transport-cards-grid"></div>
-
-                <button id="lockTransportBtn" class="cta-btn transport-btn" disabled>
-                    Continue with selected transport
-                </button>
+            <div class="input-wrapper days-group">
+              <label class="field-label">Days</label>
+              <input type="number" id="days" placeholder="Days" min="1" />
             </div>
-            <div id="hotelSection" class="section-container" style="display:none; margin-top: 40px;">
-                <h2 class="section-title">Step 2: Where will you stay?</h2>
-                <div id="hotelGrid" class="hotel-grid-layout">
-                </div>
-                <div class="action-bar">
-                    <button id="confirmHotelBtn" class="cta-btn" disabled>Select an option</button>
-                </div>
-            </div>
-            <section id="itinerarySection" style="display:none;">
-                <h2 class="itinerary-title">Your AI Travel Plan</h2>
-                <div id="itineraryContainer"></div>
-            </section>
+          </div>
 
-            <!-- DEBUG: DESTINATION PLACES -->
-            <div id="placesDebug" style="margin-top:40px; display:none;">
-                <h2 style="color:white;">Places fetched for itinerary</h2>
-                <div id="placesList"></div>
+          <div class="row">
+            <div class="preferences">
+              <label class="field-label">Travel Preferences</label>
+              <div id="tagContainer" class="tag-container">
+                <input id="tagInput" placeholder="Type & press Enter" />
+              </div>
             </div>
 
+            <!-- Adults -->
+            <div class="adults-group">
+              <label>No. of Adults</label>
+              <input
+                type="number"
+                id="adults"
+                min="1"
+                value="1"
+                placeholder="Adults"
+              />
+            </div>
+          </div>
 
+          <div class="row">
+            <div class="budget-group" style="width: 100%">
+              <!-- if budget is insufficient this will show -->
+              <span
+                id="budget-warning"
+                style="color: red; font-size: 14px; display: none"
+                >Insufficient budget for transport</span
+              >
+              <label for="budget">Budget (₹)</label>
+              <input
+                type="number"
+                id="budget"
+                placeholder="Rupees"
+                min="100"
+                step="0.01"
+                style="
+                  width: 100%;
+                  padding: 10px;
+                  border-radius: 8px;
+                  border: 1px solid rgba(255, 255, 255, 0.2);
+                  background: rgba(255, 255, 255, 0.1);
+                  color: white;
+                "
+              />
+            </div>
+          </div>
 
+          <button class="cta-btn">Proceed</button>
+        </form>
+        <!-- TRANSPORT OPTIONS -->
+        <!-- TRANSPORT SELECTION -->
+        <div
+          id="transportSection"
+          class="transport-section"
+          style="display: none"
+        >
+          <h2 class="section-title">Choose your transport</h2>
 
+          <div id="transportCards" class="transport-cards-grid"></div>
+
+          <button id="lockTransportBtn" class="cta-btn transport-btn" disabled>
+            Continue with selected transport
+          </button>
         </div>
+        <div
+          id="hotelSection"
+          class="section-container"
+          style="display: none; margin-top: 40px"
+        >
+          <h2 class="section-title">Step 2: Where will you stay?</h2>
+          <div id="hotelGrid" class="hotel-grid-layout"></div>
+          <div class="action-bar">
+            <button id="confirmHotelBtn" class="cta-btn" disabled>
+              Select an option
+            </button>
+          </div>
+        </div>
+        <section id="itinerarySection" style="display: none">
+          <h2 class="itinerary-title">Your AI Travel Plan</h2>
+          <div id="itineraryContainer"></div>
+        </section>
+
+        <!-- DEBUG: DESTINATION PLACES -->
+        <div id="placesDebug" style="margin-top: 40px; display: none">
+          <h2 style="color: white">Places fetched for itinerary</h2>
+          <div id="placesList"></div>
+        </div>
+      </div>
     </section>
 
     <!-- JS -->
-  <script type="module" src="js/main.js"></script>
-
-</body>
-
+    <script type="module" src="js/main.js"></script>
+  </body>
 </html>

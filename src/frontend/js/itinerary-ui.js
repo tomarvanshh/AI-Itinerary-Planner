@@ -5,6 +5,13 @@
   container.innerHTML = "";
   section.style.display = "block";
 
+  // FUNCTION TO GET IMAGE URL FROM PHOTO REFERENCE of place in itinerary
+  function getPlaceImage(photoRef) {
+  if (!photoRef) return "https://as1.ftcdn.net/v2/jpg/00/82/47/38/1000_F_82473837_DRNJnLCFYuSUsObj3EgBY0h7is2BApgD.jpg";
+
+  return `http://127.0.0.1:5000/api/hotel/photo?photoreference=${photoRef}`;
+  }
+
   itinerary.forEach(day => {
     const dayCard = document.createElement("div");
     dayCard.className = "day-card";
@@ -12,15 +19,43 @@
     let placesHTML = "";
 
     day.places.forEach(place => {
+
+      let place_details = "";
+      if(place.generative_summary){
+        place_details += place.generative_summary + "<br/>";
+      }
+      if(place.review_summary){
+        place_details += place.review_summary;
+      }
+      const imageUrl = getPlaceImage(place.photo_ref);
+
+      // 🍽️ MEAL
+      if (place.type === "meal") {
+        placesHTML += `
+          <div class="meal-card">
+            ${place.name}
+            <div class="meal-link">
+              <a href="${place.website}" target="_blank">View Restaurant</a>
+            </div>
+          </div>`;
+      }
+      //  If not meal then it is a place
+      else
+      {
       placesHTML += `
-        <div class="place-row">
-          <div class="place-name">${place.name}</div>
-          <div class="place-time">
-            Sightseeing: ${place.sightseeing_hr}h |
-            Travel: ${place.travel_hr}h
+        <div class="place-card">
+          <div class="place-left">
+            <div class="place-title">${place.name}</div>
+            <div class="place-details">${place_details || "Less explored place, Discover and Enjoy!"}</div>
           </div>
-        </div>
-      `;
+
+          <div class="place-right">
+            <img src="${imageUrl}" class="place-img"/>
+          </div>
+        </div>`;
+      }
+      
+
     });
 
     dayCard.innerHTML = `
@@ -36,3 +71,5 @@
     container.appendChild(dayCard);
   });
 }
+
+

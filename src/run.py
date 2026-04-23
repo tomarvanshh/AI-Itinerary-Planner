@@ -1,4 +1,7 @@
+# import logging
 from backend import create_app
+
+# logging.basicConfig(level=logging.DEBUG)
 
 app = create_app()
 

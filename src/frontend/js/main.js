@@ -15,6 +15,18 @@ let tripContext = {
   days: null,
   budget: null
 };
+// main.js helper functions
+const loadingOverlay = document.getElementById("loadingOverlay");
+const loadingText = document.getElementById("loadingText");
+
+function showLoading(text) {
+    loadingText.innerText = text;
+    loadingOverlay.style.display = "flex";
+}
+
+function hideLoading() {
+    loadingOverlay.style.display = "none";
+}
 
 /**
  * Main Form Submission Handler
@@ -33,12 +45,13 @@ document.getElementById("tripForm").addEventListener("submit", async (e) => {
   // 2. Capture Input Values
   const budgetVal = parseFloat(document.getElementById("budget").value);
   const daysVal = document.getElementById("days").value;
+  const adultsVal = parseInt(document.getElementById("adults").value) || 1;
 
   if (isNaN(budgetVal) || budgetVal <= 0) {
     alert("Please enter a valid budget.");
     return;
   }
-
+  showLoading("Fetching Transport & Hotels..."); // Start Loading
   try {
     // 3. Calculate Geospatial Distance
     const distanceRes = await fetchDistance({
@@ -46,14 +59,19 @@ document.getElementById("tripForm").addEventListener("submit", async (e) => {
       destination: destinationCity
     });
 
+    const formattedDate = new Date().toISOString().split('T')[0];
+    console.log(formattedDate); // "2026-03-20"
+
+
     // 4. Fetch Real-time Transport (Flights/Trains)
     const transportRes = await fetchTransport({
       distance_km: distanceRes.distance_km,
       days: daysVal,
       budget: budgetVal,
+      adults: adultsVal,
       source: sourceCity,      // Passed as object {name, lat, lon}
       destination: destinationCity,
-      date: "2026-03-15"      // Using fixed date for project testing
+      date: formattedDate      // Using current date for project testing, date is in "YYYY-MM-DD" format(string), backend can handle date parsing and validation
     });
 
     // 5. Fetch Potential Attractions at Destination
@@ -72,6 +90,9 @@ document.getElementById("tripForm").addEventListener("submit", async (e) => {
     console.error("Trip generation error:", err);
     alert("Something went wrong while fetching travel options. Please try again.");
   }
+  finally {
+        hideLoading(); // Stop Loading regardless of success/fail
+    }
 });
 
 /**
@@ -85,6 +106,8 @@ onHotelConfirmed(async () => {
     return; 
   }
 
+  showLoading("Generating your personalized itinerary with AI..."); // Start Loading
+
   try {
     // Show a basic loading indicator if needed
     console.log("Generating personalized itinerary...");
@@ -93,16 +116,20 @@ onHotelConfirmed(async () => {
     const itinerary = await fetchItinerary({
       places: tripContext.places,
       days: tripContext.days,
+      budget: tripContext.budget,
       preferences: getPreferences(),
       selected_hotel: getSelectedHotel() // Coordinates used for daily clustering
     });
 
     // Render results to the UI
     renderItinerary(itinerary);
-    renderPlacesDebug(tripContext.places);
+    // renderPlacesDebug(tripContext.places);
 
   } catch (err) {
     console.error("Itinerary error after hotel confirmation:", err);
     alert("Failed to generate itinerary. Check backend logs for LLM errors.");
   }
+  finally {
+        hideLoading(); // Stop Loading
+    }
 });
