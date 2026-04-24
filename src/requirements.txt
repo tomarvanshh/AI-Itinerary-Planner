@@ -1,0 +1,28 @@
+# PlanMySafar - Backend Dependencies
+# Tested with Python 3.11.x (recommended)
+# Python 3.14 is NOT supported yet by ML packages (scikit-learn,
+# sentence-transformers, numpy) — use Python 3.11
+# ================================================================
+ 
+# ── Web Framework ───────────────────────────────────────────────
+flask==3.1.0
+flask-cors==5.0.1
+ 
+# ── HTTP Requests ───────────────────────────────────────────────
+requests==2.32.3
+ 
+# ── Environment Variables ───────────────────────────────────────
+python-dotenv==1.0.1
+ 
+# ── Google Gemini AI ────────────────────────────────────────────
+google-genai==1.10.0
+ 
+# ── NLP / Semantic Similarity ───────────────────────────────────
+# These three must stay in sync — mismatched versions cause crashes
+sentence-transformers==3.4.1
+scikit-learn==1.6.1
+numpy==1.26.4              
+ 
+# ── Production Server ───────────────────────────────────────────
+gunicorn==23.0.0
+ 

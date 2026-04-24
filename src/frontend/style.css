@@ -111,24 +111,26 @@ button:hover {
   top: 100%;
   left: 0;
   right: 0;
-  background: white;
+  background: #fff;
   border: 1px solid #ddd;
-  border-radius: 8px;
-  max-height: 200px;
+  border-radius: 12px;
+  max-height: 220px;
   overflow-y: auto;
-  z-index: 10;
+  z-index: 1000;
   display: none;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+  margin-top: 4px;
+  width: 100%;
 }
 
 .suggestion-item {
-  padding: 10px;
+  padding: 12px;
   cursor: pointer;
   font-size: 14px;
+  color: #1d03ac;
 }
 
-.suggestion-item:hover {
-  background: #f0f6ff;
-}
+.suggestion-item:hover,
 .suggestion-item.active {
   background: #0077ff;
   color: #fff;
@@ -268,6 +270,8 @@ input.invalid {
   flex: 1;
   display: flex;
   flex-direction: column;
+  position: relative;
+  z-index: 1;
 }
 
 .field-label {
@@ -397,39 +401,6 @@ input.invalid {
   background: linear-gradient(135deg, #0077ff, #00c6ff);
   color: #fff;
   cursor: pointer;
-}
-
-/* =========================================================
-   AUTOCOMPLETE
-========================================================= */
-.autocomplete {
-  position: relative;
-}
-
-.suggestions {
-  position: absolute;
-  top: 105%;
-  left: 0;
-  right: 0;
-  background: #fff;
-  border-radius: 12px;
-  max-height: 220px;
-  overflow-y: auto;
-  display: none;
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
-  z-index: 10;
-}
-
-.suggestion-item {
-  padding: 10px;
-  cursor: pointer;
-  color: #1d03ac;
-}
-
-.suggestion-item:hover,
-.suggestion-item.active {
-  background: #0077ff;
-  color: #fff;
 }
 
 /* =========================================================
