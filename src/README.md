@@ -1,4 +1,5 @@
 # PlanMySafar 🧭
+
 ### AI-Powered Travel Itinerary Planner for India
 
 [![Python](https://img.shields.io/badge/Python-3.11-blue?logo=python)](https://python.org)
@@ -49,18 +50,18 @@ PlanMySafar is a full-stack AI travel planner that generates personalized day-by
 
 ## Tech Stack
 
-| Layer | Technology |
-|---|---|
-| **Backend Framework** | Flask 3.1 (Python 3.11) |
-| **NLP / Embeddings** | sentence-transformers (`all-MiniLM-L6-v2`) |
-| **Similarity Scoring** | scikit-learn cosine similarity |
-| **Geospatial** | Custom Haversine formula, Mapbox Geocoding API |
-| **Places & Hotels** | Google Places API v2 (New) |
-| **AI Refinement** | Google Gemini (`gemini-2.5-flash`) |
-| **Frontend** | Vanilla JS (ES Modules), HTML5, CSS3 |
-| **CORS** | flask-cors |
-| **Environment** | python-dotenv |
-| **Production Server** | Gunicorn |
+| Layer                  | Technology                                     |
+| ---------------------- | ---------------------------------------------- |
+| **Backend Framework**  | Flask 3.1 (Python 3.11)                        |
+| **NLP / Embeddings**   | sentence-transformers (`all-MiniLM-L6-v2`)     |
+| **Similarity Scoring** | scikit-learn cosine similarity                 |
+| **Geospatial**         | Custom Haversine formula, Mapbox Geocoding API |
+| **Places & Hotels**    | Google Places API v2 (New)                     |
+| **AI Refinement**      | Google Gemini (`gemini-2.5-flash`)             |
+| **Frontend**           | Vanilla JS (ES Modules), HTML5, CSS3           |
+| **CORS**               | flask-cors                                     |
+| **Environment**        | python-dotenv                                  |
+| **Production Server**  | Gunicorn                                       |
 
 ---
 
@@ -229,14 +230,15 @@ If no transport option fits within the allocated budget, the user is warned with
 
 ## API Integrations
 
-| API | Used For | Endpoint |
-|---|---|---|
-| **Mapbox Geocoding v5** | City search autocomplete | `GET /api/search-city` |
-| **Google Places API v2** | Tourist attractions, hotels | `POST /api/places`, `/api/hotels` |
-| **Google Places API v2** | Restaurants near attractions | `POST /api/restaurants` |
-| **Google Gemini** | Optional LLM itinerary refinement | Internal — `llm_service.py` |
+| API                      | Used For                          | Endpoint                          |
+| ------------------------ | --------------------------------- | --------------------------------- |
+| **Mapbox Geocoding v5**  | City search autocomplete          | `GET /api/search-city`            |
+| **Google Places API v2** | Tourist attractions, hotels       | `POST /api/places`, `/api/hotels` |
+| **Google Places API v2** | Restaurants near attractions      | `POST /api/restaurants`           |
+| **Google Gemini**        | Optional LLM itinerary refinement | Internal — `llm_service.py`       |
 
 ### Google Places API v2 (New)
+
 This project uses the **new** Google Places API (`places.googleapis.com/v1/`) with the `X-Goog-FieldMask` header for efficient field selection, and pulls `generativeSummary` and `reviewSummary` — AI-generated descriptions of each place — directly from the API response.
 
 ---
@@ -251,6 +253,7 @@ frontend/js/     → ES Module architecture. Each file has a single responsibili
 ```
 
 **Design principles followed:**
+
 - Separation of concerns — routes never contain business logic
 - Service layer is independently testable
 - Single source of truth for API base URL (`config.js`)
@@ -273,8 +276,8 @@ frontend/js/     → ES Module architecture. Each file has a single responsibili
 
 ```bash
 # Fork the repo on GitHub, then clone your fork
-git clone https://github.com/YOUR_USERNAME/PlanMySafar.git
-cd PlanMySafar
+git clone https://github.com/tomarvanshh/AI-Itinerary-Planner
+cd AI-Itinerary-Planner
 ```
 
 ---
@@ -321,6 +324,7 @@ GEMINI_API_KEY=your_gemini_key_here
 ```
 
 **How to get each key:**
+
 - **Google Places** — [Google Cloud Console](https://console.cloud.google.com) → Enable "Places API (New)"
 - **Mapbox** — [mapbox.com](https://mapbox.com) → Account → Access Tokens
 - **Gemini** — [Google AI Studio](https://aistudio.google.com) → Get API Key
@@ -335,6 +339,7 @@ python run.py
 ```
 
 You should see:
+
 ```
  * Running on http://127.0.0.1:5000
  * Debug mode: on
@@ -363,13 +368,13 @@ The frontend will be available at `http://127.0.0.1:5500`.
 
 ## Environment Variables
 
-| Variable | Required | Description |
-|---|---|---|
-| `GOOGLE_PLACES_API_KEY` | Yes | For fetching attractions and hotels |
-| `GOOGLE_MAPS_RESTAURANT_API_KEY` | Yes | For fetching restaurants (can be same key) |
-| `MAPBOX_TOKEN` | Yes | For city autocomplete search |
-| `GEMINI_API_KEY` | Yes | For Gemini LLM itinerary refinement |
-| `ALLOWED_ORIGINS` | No | Comma-separated frontend URLs (production only) |
+| Variable                         | Required | Description                                     |
+| -------------------------------- | -------- | ----------------------------------------------- |
+| `GOOGLE_PLACES_API_KEY`          | Yes      | For fetching attractions and hotels             |
+| `GOOGLE_MAPS_RESTAURANT_API_KEY` | Yes      | For fetching restaurants (can be same key)      |
+| `MAPBOX_TOKEN`                   | Yes      | For city autocomplete search                    |
+| `GEMINI_API_KEY`                 | Yes      | For Gemini LLM itinerary refinement             |
+| `ALLOWED_ORIGINS`                | No       | Comma-separated frontend URLs (production only) |
 
 > Do **not** set `ALLOWED_ORIGINS` in local development. The backend defaults to allowing `http://127.0.0.1:5500` automatically.
 
@@ -421,14 +426,14 @@ renderItinerary()                  → Frontend renders day cards with photos
 
 ## What Makes This Project Stand Out
 
-| Feature | Why It Matters |
-|---|---|
+| Feature                           | Why It Matters                                                                                              |
+| --------------------------------- | ----------------------------------------------------------------------------------------------------------- |
 | **Custom K-Means with Haversine** | Most projects use sklearn. Implementing from scratch with geographic distance shows algorithm fundamentals. |
-| **NLP Semantic Matching** | Preference matching via embeddings, not keyword search — real ML, not fake AI. |
-| **Multi-API Orchestration** | 4 external APIs coordinated in a single request pipeline — real integration complexity. |
-| **Budget Intelligence** | Automatic allocation across transport, food, and accommodation — product thinking, not just coding. |
-| **Modular Architecture** | Clean separation of routes, services, and state — production-grade code organization. |
-| **ES Module Frontend** | No framework needed — demonstrates deep JS fundamentals with proper module architecture. |
+| **NLP Semantic Matching**         | Preference matching via embeddings, not keyword search — real ML, not fake AI.                              |
+| **Multi-API Orchestration**       | 4 external APIs coordinated in a single request pipeline — real integration complexity.                     |
+| **Budget Intelligence**           | Automatic allocation across transport, food, and accommodation — product thinking, not just coding.         |
+| **Modular Architecture**          | Clean separation of routes, services, and state — production-grade code organization.                       |
+| **ES Module Frontend**            | No framework needed — demonstrates deep JS fundamentals with proper module architecture.                    |
 
 ---
 
@@ -444,4 +449,4 @@ MIT License — see `LICENSE` for details.
 
 ---
 
-*Built with ❤️ for travelers across India*
+_Built with ❤️ for travelers across India_
