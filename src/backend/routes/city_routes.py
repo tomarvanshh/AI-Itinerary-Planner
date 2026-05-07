@@ -2,6 +2,8 @@ from flask import Blueprint, request, jsonify
 import requests
 from flask import current_app
 
+from backend.utils.redis_client import redis_client
+
 city_bp = Blueprint("city", __name__)
 
 MAPBOX_URL = "https://api.mapbox.com/geocoding/v5/mapbox.places"
@@ -12,6 +14,12 @@ def search_city():
 
     if len(query) < 2:
         return jsonify([])
+    
+    # cache_key = f"city_search:{query}"
+
+    # cached = redis_client.get(cache_key)
+    # if cached:
+    #     return jsonify(cached)
 
     MAPBOX_TOKEN = current_app.config["MAPBOX_TOKEN"]
 
@@ -28,5 +36,8 @@ def search_city():
     response = requests.get(url, params=params)
     data = response.json()
     print("inside routes -> city_routes.py -> route -> search-city: data for city from Mapbox is :",data)
+
+    # redis_client.set(cache_key, data, ex=3600)
+    # print(f"✅ Cached city search for '{query}' with key: {cache_key}")
 
     return jsonify(data.get("features", []))

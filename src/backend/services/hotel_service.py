@@ -1,10 +1,21 @@
 import requests
 from flask import current_app
+from backend.utils.redis_client import redis_client
+from backend.utils.cache_utils import normalize_city
 
 GOOGLE_PLACES_URL = "https://places.googleapis.com/v1/places:searchNearby"
 
 
-def fetch_hotels(lat, lon):
+def fetch_hotels(lat, lon, city_name=None):
+
+    city = normalize_city(city_name) if city_name else f"{round(lat,2)}:{round(lon,2)}"
+    cache_key = f"city:{city}:hotels"
+
+    # 🔍 Cache check
+    cached = redis_client.get(cache_key)
+    if cached:
+        return cached
+
     api_key = current_app.config["GOOGLE_PLACES_API_KEY"]
 
     headers = {
@@ -63,4 +74,7 @@ def fetch_hotels(lat, lon):
             "address": h.get("formattedAddress", "Unknown")
         })
 
+    # 💾 Cache (TTL: 6 hours)
+    redis_client.set(cache_key, hotels, ttl=21600)
+    print(f"✅ Cached saved hotels for {city} with key: {cache_key}")
     return hotels

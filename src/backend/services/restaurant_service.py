@@ -1,10 +1,21 @@
 import requests,os
 from flask import current_app
+from backend.utils.redis_client import redis_client
+from backend.utils.cache_utils import latlon_key
 
 GOOGLE_PLACES_URL = "https://places.googleapis.com/v1/places:searchNearby"
 
 
 def fetch_nearby_restaurants(lat, lon, radius=1000):
+
+    key = latlon_key(lat, lon)
+    cache_key = f"latlon:{key}:restaurants"
+
+    # 🔍 Cache check
+    cached = redis_client.get(cache_key)
+    if cached:
+        return cached
+
     api_key = os.getenv("GOOGLE_MAPS_RESTAURANT_API_KEY")
 
     headers = {
@@ -32,6 +43,13 @@ def fetch_nearby_restaurants(lat, lon, radius=1000):
     if "error" in data:
         print("Google Places API Error:", data["error"])
         return []
+    
+    restaurants = data.get("places", [])
+
+    # 💾 Cache (TTL: 4 hours)
+    redis_client.set(cache_key, restaurants, ttl=14400)
+    print(f"✅ Cached restaurants for latlon {key} with key: {cache_key}")
+    
     return data.get("places", [])
 
 
