@@ -273,7 +273,7 @@ frontend/js/     → ES Module architecture. Each file has a single responsibili
 
 ```bash
 # Fork the repo on GitHub, then clone your fork
-git clone https://github.com/YOUR_USERNAME/PlanMySafar.git
+git clone https://github.com/tomarvanshh/AI-Itinerary-Planner.git
 cd PlanMySafar
 ```
 
