@@ -1,100 +1,42 @@
-# import time
-# import json
-# import os
-# from google import genai
-
-
-# def get_client():
-#     api_key = os.getenv("GEMINI_API_KEY")
-#     return genai.Client(api_key=api_key)
-
-
-# def refine_itinerary(raw_itinerary, preferences):
-#     client = get_client()
-
-#     prompt = f"""
-# You are a professional travel planner.
-
-# Improve the following itinerary.
-
-# Rules:
-# - Keep same places
-# - Do NOT add/remove places
-# - Keep 8 hour/day limit
-# - Return ONLY valid JSON
-
-# User Preferences: {preferences}
-
-# Raw Itinerary:
-# {json.dumps(raw_itinerary)}
-# """
-
-#     retries = 3
-
-#     for attempt in range(retries):
-#         try:
-#             response = client.models.generate_content(
-#                 model="models/gemini-2.5-flash",
-#                 contents=prompt
-#             )
-
-#             return json.loads(response.text)
-
-#         except Exception as e:
-#             print(f"Gemini error (attempt {attempt+1}):", e)
-
-#             if attempt < retries - 1:
-#                 time.sleep(1)  # sleep for 1 second before retrying
-#             else:
-#                 print("Fallback: returning raw itinerary")
-#                 return raw_itinerary
 import time
 import json
 import os
-from google import genai
-from google.genai import errors # Import for specific error handling
+import google.generativeai as genai
+from flask import current_app
+from dotenv import load_dotenv
 
-def get_client():
-    # It's better to initialize the client once outside the function 
-    # to avoid repeated connection overhead
-    api_key = os.getenv("GEMINI_API_KEY")
-    return genai.Client(api_key=api_key)
+load_dotenv()
 
-def refine_itinerary(raw_itinerary, preferences):
+
+def generate_city_summary(city_name):
     """
-    For now this function is blank later we will add a gemini AI service to enhance the itinerary with generative summaries and review summaries for each place.
+    Generates a structured overview of the destination city using Gemini.
     """
+    print(f"Inside generate_city_summary for {city_name}")
+    try:
+        # Fetch the key directly from the environment
+        api_key = os.getenv("GEMINI_API_KEY")
+        if not api_key:
+            print("Gemini Error: GEMINI_API_KEY not found in environment.")
+            return f"Welcome to {city_name}! Enjoy your exploration."
 
+        genai.configure(api_key=api_key)
+        model = genai.GenerativeModel('gemini-3.1-flash-lite') # cite: README.md
 
-    # client = get_client()
-    
-    # # Pro-tip: Use System Instructions for better JSON reliability
-    # prompt = f"""
-    # Improve the following travel itinerary based on these preferences: {preferences}.
-    # Rules:
-    # - Keep the same places.
-    # - Do NOT add/remove places.
-    # - Maintain an 8-hour per day limit.
-    # - Return ONLY valid JSON matching the input structure.
-    
-    # Raw Itinerary: {json.dumps(raw_itinerary)}
-    # """
+        # Precise prompt to control line counts as requested
+        prompt = f"""
+        Provide a travel overview for {city_name}, India in exactly three sections:
+        Start each section title with a relevant emoji.
+        1. "Exploring": 3-4 lines about the vibe and exploration.
+        2. "Famous For": 2-3 lines about unique landmarks or specialties.
+        3. "Best Time to Visit": 2-3 lines about seasonal advice.
+        Keep the tone professional and inviting. Do not use bold markdown.
+        """
 
-   
-    # try:
-    #     # Added config to enforce JSON output if the model supports it
-    #     response = client.models.generate_content(
-    #     model="gemini-2.5-flash", 
-    #     contents=prompt,
-    #     config={'response_mime_type': 'application/json'} # Forces JSON mode
-    #     )
+        response = model.generate_content(prompt)
+        return response.text.strip() if response.text else "Overview currently unavailable."
 
-    #     # Use response.parsed if using the newest SDK, 
-    #     # otherwise handle text cleaning
-    #     return json.loads(response.text)
-
-    # except Exception as e:
-    #     # Check for 503 or 429 specifically
-    #     print(f"Gemini error {e}")
-    #     print("Falling back to raw itinerary.")
-    return raw_itinerary
+    except Exception as e:
+        print(f"Gemini Summary Error: {e}")
+        # Fallback text so the app doesn't crash if the AI fails
+        return f"Welcome to {city_name}! Explore the local culture and landmarks at your own pace."

@@ -118,7 +118,8 @@ onHotelConfirmed(async () => {
       days: tripContext.days,
       budget: tripContext.budget,
       preferences: getPreferences(),
-      selected_hotel: getSelectedHotel() // Coordinates used for daily clustering
+      selected_hotel: getSelectedHotel(), // Coordinates used for daily clustering
+      destination: destinationCity // Pass the destination city for better context in itinerary generation
     });
 
     // Render results to the UI

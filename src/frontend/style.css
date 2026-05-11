@@ -828,3 +828,58 @@ input.invalid {
   color: #93c5fd;
   font-size: 13px;
 }
+
+/* style.css */
+
+.final-overview-card {
+  background: linear-gradient(135deg, #ffffff, #f0f7ff);
+  /* Soft gradient */
+  border-radius: 24px;
+  padding: 30px;
+  margin: 40px auto;
+  max-width: 900px;
+  border: 1px solid rgba(0, 119, 255, 0.2);
+  border-top: 6px solid #0077ff;
+  /* Brand accent */
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
+}
+
+.final-overview-card:hover {
+  transform: translateY(-5px);
+  /* Interactive feel */
+}
+
+.summary-header {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 25px;
+  color: #0a3d91;
+  border-bottom: 2px solid #eef2f6;
+  padding-bottom: 15px;
+}
+
+.summary-header h3 {
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.summary-content {
+  line-height: 1.8;
+  color: #334155;
+  font-size: 16px;
+}
+
+/* Style the section titles specifically */
+.summary-content br+br {
+  display: block;
+  content: "";
+  margin-top: 15px;
+}
+
+.summary-content b {
+  color: #0077ff;
+  font-size: 18px;
+}

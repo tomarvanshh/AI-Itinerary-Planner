@@ -13,6 +13,14 @@
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
     />
+
+    <!-- ── PDF Generation Libraries ────────────────────────────────────────
+         Load BEFORE js/main.js so they are available when pdf.js runs.
+         html2canvas : screenshots a DOM element into a <canvas>
+         jsPDF       : creates a PDF document and inserts canvas images
+    ─────────────────────────────────────────────────────────────────────── -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   </head>
 
   <body>
@@ -21,6 +29,7 @@
       <div class="spinner"></div>
       <p id="loadingText">Fetching the best options for you...</p>
     </div>
+
     <!-- ===== NAVBAR ===== -->
     <header class="navbar">
       <div class="nav-left">
@@ -93,7 +102,6 @@
               </div>
             </div>
 
-            <!-- Adults -->
             <div class="adults-group">
               <label>No. of Adults</label>
               <input
@@ -108,7 +116,6 @@
 
           <div class="row">
             <div class="budget-group" style="width: 100%">
-              <!-- if budget is insufficient this will show -->
               <span
                 id="budget-warning"
                 style="color: red; font-size: 14px; display: none"
@@ -135,26 +142,18 @@
 
           <button class="cta-btn">Proceed</button>
         </form>
-        <!-- TRANSPORT OPTIONS -->
+
         <!-- TRANSPORT SELECTION -->
-        <div
-          id="transportSection"
-          class="transport-section"
-          style="display: none"
-        >
+        <div id="transportSection" class="transport-section" style="display: none">
           <h2 class="section-title">Choose your transport</h2>
-
           <div id="transportCards" class="transport-cards-grid"></div>
-
           <button id="lockTransportBtn" class="cta-btn transport-btn" disabled>
             Continue with selected transport
           </button>
         </div>
-        <div
-          id="hotelSection"
-          class="section-container"
-          style="display: none; margin-top: 40px"
-        >
+
+        <!-- HOTEL SELECTION -->
+        <div id="hotelSection" class="section-container" style="display: none; margin-top: 40px">
           <h2 class="section-title">Step 2: Where will you stay?</h2>
           <div id="hotelGrid" class="hotel-grid-layout"></div>
           <div class="action-bar">
@@ -163,20 +162,30 @@
             </button>
           </div>
         </div>
+
+        <!-- ITINERARY OUTPUT
+             Structure after render (managed entirely by itinerary-ui.js):
+             #itinerarySection
+               #itineraryContainer
+                 #itineraryDays        ← day cards (pdf.js screenshots this)
+                 #downloadPdfBtn       ← injected by itinerary-ui.js
+                 .final-overview-card  ← AI overview (excluded from PDF)
+        -->
         <section id="itinerarySection" style="display: none">
           <h2 class="itinerary-title">Your AI Travel Plan</h2>
           <div id="itineraryContainer"></div>
         </section>
 
-        <!-- DEBUG: DESTINATION PLACES -->
+        <!-- DEBUG: DESTINATION PLACES (hidden in production) -->
         <div id="placesDebug" style="margin-top: 40px; display: none">
           <h2 style="color: white">Places fetched for itinerary</h2>
           <div id="placesList"></div>
         </div>
+
       </div>
     </section>
 
-    <!-- JS -->
+    <!-- Main JS entry point (ES module) -->
     <script type="module" src="js/main.js"></script>
   </body>
 </html>

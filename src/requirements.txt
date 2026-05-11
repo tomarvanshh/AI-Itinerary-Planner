@@ -16,6 +16,7 @@ python-dotenv==1.0.1
  
 # ── Google Gemini AI ────────────────────────────────────────────
 google-genai==1.10.0
+google-generativeai
  
 # ── NLP / Semantic Similarity ───────────────────────────────────
 # These three must stay in sync — mismatched versions cause crashes
